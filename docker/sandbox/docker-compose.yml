@@ -1,0 +1,38 @@
+version: '3.7'
+
+services:
+  database:
+    image: postgres:alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=data
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - database:/var/lib/postgresql/data/
+  server:
+    depends_on:
+      - database
+    build:
+      context: ../../components/server
+      dockerfile: ../../docker/sandbox/server.dockerfile
+    environment:
+      - DEBUG=1
+      - DOMAIN=0.0.0.0
+      - DATABASE_NAME=data
+      - DATABASE_USER=user
+      - SECRET_KEY=secret_key
+      - DATABASE_HOST=database
+      - DATABASE_PASSWORD=password
+    ports:
+      - "8000:8000"
+    command: >
+      bash -c "echo Waiting for database ;
+      { while !</dev/tcp/database/5432; do sleep 0.5; done } > /dev/null 2>&1 ;
+      python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ../../components/server:/server
+
+volumes:
+  database:

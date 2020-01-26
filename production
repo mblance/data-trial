@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# shortcut commands for production would be here,
+# things like building images, pushing them to a registry, etcetera...

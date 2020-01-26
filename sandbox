@@ -1,0 +1,25 @@
+#!/bin/sh
+
+compose="docker-compose -p data-trial -f ./docker/sandbox/docker-compose.yml"
+down="$compose stop -t 0 && $compose rm -f -v"
+wait_for_database="echo Waiting for database ; { while !</dev/tcp/database/5432; do sleep 0.5; done } > /dev/null 2>&1"
+
+filename=$0
+command=$1
+
+case $command in
+   build) eval "$compose build"
+   ;;
+   up) eval "$compose up &"
+   ;;
+   down) eval "$down"
+   ;;
+   reset_database) eval "$down ; docker volume rm data-trial_database"
+   ;;
+   python) eval "$compose run server bash -c '$wait_for_database ; python ${@:2}' ; $down"
+   ;;
+   lint) eval "$compose run --no-deps server flake8 . ; $down"
+   ;;
+   *) echo "$filename <build|up|down|reset_database|python|lint>"
+   ;;
+esac
