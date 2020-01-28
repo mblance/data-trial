@@ -2,7 +2,7 @@
 
 **Please read this entire README before you begin**
 
-Some proficiency with Git, Python, Django, and your terminal is assumed. No proficiency with Docker is assumed but it is suggested that you read [this](https://docs.docker.com/engine/docker-overview/) to get familiar with the vocabulary.
+Some proficiency with Git, Python, Django, and your terminal is assumed. No proficiency with Docker is assumed but it is suggested that you read [this](https://docs.docker.com/engine/docker-overview/) to get familiar with the vocabulary. If using Windows you may have an easier time doing this task within a Linux VM.
 
 ### Overview
 
@@ -28,7 +28,7 @@ While developing you will want to interact with your API to test it. Run `./sand
 Roughly, the steps you need to follow to complete this task are...
 
 1. Clone this repository onto your machine
-2. [Install Docker for your operating system](https://docs.docker.com/get-docker/) (if using Windows you may have an easier time running a Linux VM); note that you do not need to install Python, PostgreSQL, or any other software onto your machine
+2. [Install Docker for your operating system](https://docs.docker.com/get-docker/); note that you do not need to install Python, PostgreSQL, or any other software onto your machine
 3. Start Docker
 4. Open your terminal and cd into the repository
 5. Run `./sandbox up` to start the database, run the default migrations, and start the server; the first time you run this will be slow as Docker will be starting from scratch
