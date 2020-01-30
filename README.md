@@ -21,7 +21,7 @@ The Django server has been created for you in the `components/server/` directory
 
 ### Your task
 
-Your task is to implement a simple REST API according to [this OAS3 API specification](https://app.swaggerhub.com/apis/sportshi-team/data-test/1.0.0#/). You should implement exactly to spec, nothing more nothing less. How you implement is entirely up to you; you can install any python modules you want (see the `requirements.txt` file), you can create any Django apps you want, etc. Writing tests is optional.
+Your task is to implement a simple REST API according to [this OAS3 API specification](https://app.swaggerhub.com/apis/sportshi-team/data-test/1.0.0#/) (you don’t have to actually understand the raw OAS syntax itself - use the user interface provided by Swagger Hub instead). You should implement exactly to spec, nothing more nothing less. How you implement is entirely up to you; you can install any python modules you want (see the `requirements.txt` file), you can create any Django apps you want, etc. Writing tests is optional.
 
 While developing you will want to interact with your API to test it. Run `./sandbox up` to automatically run any migrations and start the server - it will be available on `http://0.0.0.0:8000/`. How you make requests to your API is up to you, but some options are your terminal, web browser, or an API development tool like Postman.
 
