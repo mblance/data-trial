@@ -16,9 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.conf.urls import url
 from django.urls import path, include
+from rest_api import views
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('/', include('rest_api.urls'))
+    path('users/', views.user_api),
+    path('messages/', views.message_api)
 ]

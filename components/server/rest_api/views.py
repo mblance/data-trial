@@ -1,15 +1,19 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_api.models import UserSerializer, MessageSerializer, User, Message
+from rest_framework.renderers import JSONRenderer
 from rest_framework import status
 from django.db import IntegrityError
 
+
+json = JSONRenderer()
 
 def create_from_request(model, data):
     """ 
         Create the instance from the request data, 
         return the dict containing 
     """
+    print(data)
     instance = UserSerializer().create(data)
     instance.save()
     return {"id": str(instance.id)}
@@ -28,13 +32,14 @@ def api_array_response_dict(serializer, instances, count):
     """
     return {
         'total_length': count, 
-        'array': serializer(instances, many=True)
+        'array': serializer(instances, many=True).data
     }
 
 
 @api_view(['GET', 'POST'])
 def user_api(request):
     data = request.data
+    print(request)
     if request.method == 'GET':
         count = User.objects.count()
         if count == 0:
@@ -53,7 +58,7 @@ def user_api(request):
         )
     else:
         try:
-            return Response(create_from_request(User, UserSerializer))
+            return Response(create_from_request(User, data))
         except IntegrityError:
             return Response(
                 {"error": "username is already in use"}, 
@@ -76,6 +81,6 @@ def message_api(request):
         )
     else:
         return Response(
-            create_from_request(Message, MessageSerializeer)
+            create_from_request(Message, data)
         )
 

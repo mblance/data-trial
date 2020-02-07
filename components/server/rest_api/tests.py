@@ -28,3 +28,29 @@ class ModelTestCase(TestCase):
 
         print(api_array_response_dict(UserSerializer, subarray, count))
 
+
+from rest_framework.test import APITestCase
+from django.urls import reverse
+
+class APITests(APITestCase):
+
+    def test_create_users(self):
+        for i in range(1, 16):
+            response = self.client.post(reverse(user_api), 
+                {
+                    "username": f"test{i:02d}",
+                    "password_hash": f"test{i:02d}"
+                },
+                format='json'
+            )
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        print(response.data)
+        self.assertEqual(User.objects.count(), 15)
+        self.assertEqual(User.objects.first().username, 'test01') 
+        self.assertEqual(User.objects.first().password_hash, 'test01')
+
+        response = self.client.get(reverse(user_api), format='json')
+        print(response.data)
+
