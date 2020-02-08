@@ -9,7 +9,7 @@ from django.db import IntegrityError
 def create_from_request(model, serializer, data):
     """ 
         Create the instance from the request data, 
-        return the dict containing 
+        return the dict containing the created id 
     """
     instance = serializer().create(data)
     instance.save()
@@ -34,6 +34,7 @@ def api_array_response_dict(serializer, instances, count):
         "array": serializer(instances, many=True).data
     }
 
+available_user_sorts = {'username': '-username', 'timestamp': 'timestamp'}
 
 @api_view(['GET', 'POST'])
 def user_api(request):
@@ -43,11 +44,9 @@ def user_api(request):
         if count == 0:
             return Response({"total_len": 0, "array": []})
 
-        index, vector, sort = (
-            params.get('index', count), params.get('vector', '-10'), params.get('sort', '-username')
-        )
-        if sort not in ('-username', 'timestamp'):
-            raise ValueError('Specified sort is not available')
+        index, vector = params.get('index', count), params.get('vector', '-10')
+        ### Default the sorts to -username if an unavailable sort is specified
+        sort = available_user_sorts.get(params.get('sort', 'username'), '-username')
 
         return Response(
             api_array_response_dict(

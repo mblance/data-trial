@@ -23,7 +23,7 @@ class ModelTestCase(TestCase):
 
         count = User.objects.count()
 
-        subarray = api_subarray(User, -1, count, '-username')
+        subarray = api_subarray(User, '-1', count, '-username')
         print(subarray, User.objects.order_by('-username'))
 
         print(api_array_response_dict(UserSerializer, subarray, count))
@@ -72,7 +72,10 @@ class UserAPITestCase(BaseAPITestCase):
         self.url = reverse(user_api)
         self.model = User
         self.cases = [
-            {"username": f"test{i:02d}", "password_hash": f"test{i:02d}"}
+            {
+                "username": f"test{i:02d}", "password_hash": f"test{i:02d}",
+                "timestamp": f"2020-02-08T08:30:{i:02d}.135133Z"
+            }
             for i in range(1, 16)
         ]
 
@@ -81,6 +84,10 @@ class UserAPITestCase(BaseAPITestCase):
         response_data = self.client.get(
             self.url, {"vector": "-0", "index": "10", "sort": "timestamp"}, format='json'
         ).data
+        self.assertEqual(
+            self.client.get(self.url, {"sort": "InvalidSort"}, format='json').status_code,
+            status.HTTP_200_OK
+        )
         self.assertEqual(
             [u['username'] for u in response_data['array']],
             [u.username for u in self.model.objects.order_by('timestamp')[0:10][::-1]]
@@ -99,6 +106,9 @@ class MessageAPITestCase(BaseAPITestCase):
         self.url = reverse(message_api)
         self.model = Message
         self.cases = [
-            {"author_id": f"{i:02d}", "text": f"Test Message {i:02d}"}
+            {
+                "author_id": f"{i:02d}", "text": f"Test Message {i:02d}",
+                "timestamp": f"2020-02-08T08:30:{i:02d}.135133Z"
+            }
             for i in range(1, 16)
         ]
