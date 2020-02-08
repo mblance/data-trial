@@ -18,7 +18,7 @@ class ModelTestCase(TestCase):
     def test_view_functions(self):
         
         next_id = str(User.objects.aggregate(Max('id'))['id__max'] + 1)
-        response = create_from_request(User, {"username": "Spider Man", "password_hash": "HASH2"})
+        response = create_from_request(User, UserSerializer, {"username": "Spider Man", "password_hash": "HASH2"})
         self.assertEqual(response['id'], next_id)
 
         count = User.objects.count()
@@ -32,25 +32,73 @@ class ModelTestCase(TestCase):
 from rest_framework.test import APITestCase
 from django.urls import reverse
 
-class APITests(APITestCase):
+class BaseAPITestCase(APITestCase):
 
-    def test_create_users(self):
-        for i in range(1, 16):
-            response = self.client.post(reverse(user_api), 
-                {
-                    "username": f"test{i:02d}",
-                    "password_hash": f"test{i:02d}"
-                },
-                format='json'
-            )
 
+    def test(self):
+        response = self.client.get(self.url, format='json')
+
+        for case in self.cases:
+            response = self.client.post(self.url, case, format='json')
             self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        print(response.data)
-        self.assertEqual(User.objects.count(), 15)
+        print('Successful Post Sample:', response.data)
+        self.assertEqual(self.model.objects.count(), 15)
+
+        print('Default GET Sample:', self.client.get(self.url, format='json').data)
+
+        response_data = self.client.get(self.url, {"vector": "-2", "index": "7"}, format='json').data
+        self.assertEqual(
+            response_data['total_length'], 15
+        )
+        print('Vectored GET Sample:', response_data['array'])
+        self.assertEqual(
+            len(response_data['array']), 5
+        )
+
+        response_data = self.client.get(self.url, {"vector": "0", "index": "7"}, format='json').data
+        self.assertEqual(
+            len(response_data['array']), 7
+        )
+
+        response_data = self.client.get(self.url, {"vector": "2"}, format='json').data
+        self.assertEqual(
+            len(response_data['array']), 13
+        )
+
+class UserAPITestCase(BaseAPITestCase):
+
+    def setUp(self):
+        self.url = reverse(user_api)
+        self.model = User
+        self.cases = [
+            {"username": f"test{i:02d}", "password_hash": f"test{i:02d}"}
+            for i in range(1, 16)
+        ]
+
+    def test(self):
+        super().test()
+        response_data = self.client.get(
+            self.url, {"vector": "-0", "index": "10", "sort": "timestamp"}, format='json'
+        ).data
+        self.assertEqual(
+            [u['username'] for u in response_data['array']],
+            [u.username for u in self.model.objects.order_by('timestamp')[0:10][::-1]]
+        )
         self.assertEqual(User.objects.first().username, 'test01') 
         self.assertEqual(User.objects.first().password_hash, 'test01')
+        self.assertEqual(
+            self.client.post(self.url, {'username': 'test01'}, format='json').status_code,
+            status.HTTP_409_CONFLICT
+        )
 
-        response = self.client.get(reverse(user_api), format='json')
-        print(response.data)
 
+class MessageAPITestCase(BaseAPITestCase):
+
+    def setUp(self):
+        self.url = reverse(message_api)
+        self.model = Message
+        self.cases = [
+            {"author_id": f"{i:02d}", "text": f"Test Message {i:02d}"}
+            for i in range(1, 16)
+        ]
