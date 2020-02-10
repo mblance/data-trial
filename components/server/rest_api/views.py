@@ -27,7 +27,7 @@ def api_subarray(model, vector, index: int, sort):
         start, step = index, 1
         stop = int(vector) + start
 
-    return model.objects.order_by(sort)[start:stop].values()[::-1]
+    return model.objects.order_by(sort)[start:stop].values()[::step]
 
 
 def api_array_response(instances, count):
