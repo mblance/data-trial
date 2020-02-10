@@ -22,7 +22,7 @@ def api_subarray(model, vector, index: int, sort):
     """
     if vector[0] == '-':
         stop, step = index + 1, -1
-        start = stop + int(vector)
+        start = max(stop + int(vector), 0)
     else:
         start, step = index, 1
         stop = int(vector) + start
@@ -53,7 +53,7 @@ array_index_error_response = Response(
 
 def response_body_get(model, vector, index, sort, count):
     index = int(index)
-    if index > count:
+    if index >= count:
         return array_index_error_response
     return api_array_response(
             api_subarray(model, vector, index, sort), count

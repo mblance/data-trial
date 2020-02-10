@@ -94,7 +94,13 @@ class BaseAPITestCase(APITestCase):
 
         print("******\n\n",
             self.client.get(
-                self.url, {"vector": "-3", "index": "2", "sort": "timestamp"}, format='json'
+                self.url, {"vector": "-50", "index": "2", "sort": "timestamp"}, format='json'
+            ).data
+        )
+
+        print("******\n\n",
+            self.client.get(
+                self.url, {"vector": "100", "index": "15", "sort": "timestamp"}, format='json'
             ).data
         )
 
