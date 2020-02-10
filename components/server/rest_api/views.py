@@ -27,7 +27,7 @@ def api_subarray(model, vector, index: int, sort):
         start, step = index, 1
         stop = int(vector) + start
 
-    return model.objects.order_by(sort).values()[start:stop][::-1]
+    return model.objects.order_by(sort)[start:stop].values()[::-1]
 
 
 def api_array_response(instances, count):
@@ -63,10 +63,10 @@ def response_body_get(model, vector, index, sort, count):
 @api_view(['GET', 'POST'])
 def user_api(request):
     if request.method == 'GET':
-        params = request.query_params
         if (count := User.objects.count()) == 0:
             return empty_response
 
+        params = request.query_params
         # Default the sorts to -username if an unavailable sort is specified
         sort = available_user_sorts.get(
             params.get('sort', 'username'), '-username'
@@ -87,10 +87,10 @@ def user_api(request):
 @api_view(['GET', 'POST'])
 def message_api(request):
     if request.method == 'GET':
-        params = request.query_params
         if (count := Message.objects.count()) == 0:
             return empty_response
 
+        params = request.query_params
         return response_body_get(
             Message, params.get('vector', '-10'), params.get('index', count - 1),
             'timestamp', count
