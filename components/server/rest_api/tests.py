@@ -4,8 +4,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from django.urls import reverse
 from rest_api.views import (
-    message_api, user_api, api_subarray,
-    api_array_response, create_from_request
+    message_api, user_api, api_subarray, create_from_request_data
 )
 from rest_api.models import User, Message
 
@@ -28,7 +27,7 @@ class ModelTestCase(TestCase):
 
     def test_view_functions(self):
         next_id = str(User.objects.aggregate(Max('id'))['id__max'] + 1)
-        response = create_from_request(
+        response = create_from_request_data(
             User,
             {"username": "Spider Man", "password_hash": "HASH2"}
         )
@@ -38,8 +37,6 @@ class ModelTestCase(TestCase):
 
         subarray = api_subarray(User, '-1', count, '-username')
         print(subarray, User.objects.order_by('-username'))
-
-        print(api_array_response(User, subarray, count))
 
 
 class BaseAPITestCase(APITestCase):
@@ -66,6 +63,7 @@ class BaseAPITestCase(APITestCase):
         self.assertEqual(
             response_data['total_length'], 15
         )
+        print(response_data)
         print('Vectored GET Sample:', response_data['array'])
         self.assertEqual(
             len(response_data['array']), 2
@@ -120,12 +118,12 @@ class UserAPITestCase(BaseAPITestCase):
 
     def test(self):
         super().test()
-        response_data = self.client.get(self.url, format='json').data
+        response_data = self.client.get(self.url, {'vector': 10, 'index': 5}, format='json').data
         self.assertEqual(
             [u['username'] for u in response_data['array']],
             [
                 u.username
-                for u in self.model.objects.order_by('-username')[5:15][::-1]
+                for u in self.model.objects.order_by('-username')[5:15][::1]
             ])
         response_data = self.client.get(
             self.url,

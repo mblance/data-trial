@@ -5,14 +5,14 @@ from rest_framework import status
 from django.db import IntegrityError
 
 
-def create_from_request(model, data):
+def create_from_request_data(model, data):
     """
         Create the instance from the request data,
         return the dict containing the created id
     """
     instance = model(**data)
     instance.save()
-    return {"id": str(instance.id)}
+    return Response({"id": str(instance.id)})
 
 
 def api_subarray(model, vector, index: int, sort):
@@ -29,17 +29,6 @@ def api_subarray(model, vector, index: int, sort):
 
     return model.objects.order_by(sort)[start:stop].values()[::step]
 
-
-def api_array_response(instances, count):
-    """
-        Returns a response with the count of the array
-        with a serialized subarray
-    """
-    return Response({
-        "total_length": count,
-        "array": instances
-    })
-
 available_user_sorts = {'username': '-username', 'timestamp': 'timestamp'}
 empty_response = Response({"total_length": 0, "array": []})
 username_exists_error_response = Response(
@@ -47,18 +36,21 @@ username_exists_error_response = Response(
     status.HTTP_409_CONFLICT
 )
 array_index_error_response = Response(
-    {'error': 'array index is out of bounds'}, 
+    {'error': 'array index is out of bounds'},
     status.HTTP_400_BAD_REQUEST
 )
 
-def response_body_get(model, vector, index, sort, count):
-    index = int(index)
+def response_body_get(model, vector: str, index: int, sort: str, count: int):
+    """
+        Returns a response with the count of the array
+        with a serialized subarray
+    """
     if index >= count:
         return array_index_error_response
-    return api_array_response(
-            api_subarray(model, vector, index, sort), count
-        )
-
+    return Response({
+        "total_length": count,
+        "array": api_subarray(model, vector, index, sort)
+    })
 
 @api_view(['GET', 'POST'])
 def user_api(request):
@@ -72,14 +64,15 @@ def user_api(request):
             params.get('sort', 'username'), '-username'
         )
         return response_body_get(
-            User, params.get('vector', '-10'), params.get('index', count - 1),
+            User, params.get('vector', '-10'),
+            int(params.get('index', count - 1)),
             sort, count
         )
     else:
         # For efficiency, attempt to insert into the database to save a query
         # Will also fail if required fields are not specified
         try:
-            return Response(create_from_request(User, request.data))
+            return create_from_request_data(User, request.data)
         except IntegrityError:
             return username_exists_error_response
 
@@ -92,10 +85,9 @@ def message_api(request):
 
         params = request.query_params
         return response_body_get(
-            Message, params.get('vector', '-10'), params.get('index', count - 1),
+            Message, params.get('vector', '-10'), 
+            int(params.get('index', count - 1)),
             'timestamp', count
         )
     else:
-        return Response(
-            create_from_request(Message, request.data)
-        )
+        return create_from_request_data(Message, request.data)
