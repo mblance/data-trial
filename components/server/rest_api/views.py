@@ -45,7 +45,7 @@ def user_api(request):
         params = request.query_params
         count = User.objects.count()
         if count == 0:
-            return Response({"total_len": 0, "array": []})
+            return Response({"total_length": 0, "array": []})
 
         index, vector = params.get('index', count), params.get('vector', '-10')
 
@@ -87,5 +87,6 @@ def message_api(request):
             )
         )
     else:
-        data = request.data
-        return Response(create_from_request(Message, MessageSerializer, data))
+        return Response(
+            create_from_request(Message, MessageSerializer, request.data)
+        )
