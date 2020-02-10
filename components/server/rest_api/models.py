@@ -21,21 +21,3 @@ class Message(models.Model):
 
     def __str__(self):
         return self.author_id
-
-
-class ProjectSerializer(serializers.ModelSerializer):
-    id = serializers.CharField()
-
-
-class UserSerializer(ProjectSerializer):
-
-    class Meta:
-        model = User
-        fields = '__all__'
-
-
-class MessageSerializer(ProjectSerializer):
-
-    class Meta:
-        model = Message
-        fields = '__all__'

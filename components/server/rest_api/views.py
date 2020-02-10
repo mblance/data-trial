@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_api.models import UserSerializer, MessageSerializer, User, Message
+from rest_api.models import User, Message
 from rest_framework import status
 from django.db import IntegrityError
 
@@ -23,17 +23,17 @@ def api_subarray(model, vector, index, sort):
     step = {'-': -1}.get(vector[0], 1)
     start, stop = abs(int(vector)), int(index)
 
-    return model.objects.order_by(sort)[start:stop][::step]
+    return model.objects.order_by(sort).values()[start:stop][::step]
 
 
-def api_array_response_dict(serializer, instances, count):
+def api_array_response_dict(instances, count):
     """
         Returns a response dict with the count of the array
         with a serialized subarray
     """
     return {
         "total_length": count,
-        "array": serializer(instances, many=True).data
+        "array": instances
     }
 
 
@@ -61,7 +61,7 @@ def user_api(request):
 
         return Response(
             api_array_response_dict(
-                UserSerializer, api_subarray(User, vector, index, sort), count
+                api_subarray(User, vector, index, sort), count
             )
         )
     else:
@@ -83,7 +83,6 @@ def message_api(request):
         index, vector = params.get('index', count), params.get('vector', '-10')
         return Response(
             api_array_response_dict(
-                MessageSerializer,
                 api_subarray(Message, vector, index, 'timestamp'),
                 count
             )

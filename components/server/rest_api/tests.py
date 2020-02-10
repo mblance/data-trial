@@ -7,7 +7,7 @@ from rest_api.views import (
     message_api, user_api, api_subarray,
     api_array_response_dict, create_from_request
 )
-from rest_api.models import User, Message, UserSerializer
+from rest_api.models import User, Message
 
 
 # Create your tests here.
@@ -29,7 +29,7 @@ class ModelTestCase(TestCase):
     def test_view_functions(self):
         next_id = str(User.objects.aggregate(Max('id'))['id__max'] + 1)
         response = create_from_request(
-            User, UserSerializer,
+            User,
             {"username": "Spider Man", "password_hash": "HASH2"}
         )
         self.assertEqual(response['id'], next_id)
@@ -39,7 +39,7 @@ class ModelTestCase(TestCase):
         subarray = api_subarray(User, '-1', count, '-username')
         print(subarray, User.objects.order_by('-username'))
 
-        print(api_array_response_dict(UserSerializer, subarray, count))
+        print(api_array_response_dict(User, subarray, count))
 
 
 class BaseAPITestCase(APITestCase):
