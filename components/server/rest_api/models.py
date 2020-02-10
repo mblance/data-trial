@@ -26,9 +26,6 @@ class Message(models.Model):
 class ProjectSerializer(serializers.ModelSerializer):
     id = serializers.CharField()
 
-    def create(self, validated_data):
-        return self.Meta.model(**validated_data)
-
 
 class UserSerializer(ProjectSerializer):
 

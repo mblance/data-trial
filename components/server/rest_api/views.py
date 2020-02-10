@@ -5,12 +5,12 @@ from rest_framework import status
 from django.db import IntegrityError
 
 
-def create_from_request(model, serializer, data):
+def create_from_request(model, data):
     """
         Create the instance from the request data,
         return the dict containing the created id
     """
-    instance = serializer().create(data)
+    instance = model(**data)
     instance.save()
     return {"id": str(instance.id)}
 
@@ -63,9 +63,10 @@ def user_api(request):
             )
         )
     else:
-        data = request.data
+        # For efficiency, attempt to insert into the database to save a query
+        # Will also fail if required fields are not specified
         try:
-            return Response(create_from_request(User, UserSerializer, data))
+            return Response(create_from_request(User, request.data))
         except IntegrityError:
             return Response(
                 username_exists_error_response,
@@ -91,5 +92,5 @@ def message_api(request):
         )
     else:
         return Response(
-            create_from_request(Message, MessageSerializer, request.data)
+            create_from_request(Message, request.data)
         )
