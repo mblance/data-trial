@@ -38,17 +38,19 @@ def api_array_response_dict(serializer, instances, count):
 
 
 available_user_sorts = {'username': '-username', 'timestamp': 'timestamp'}
-empty_response = {"total_length": 0, "array": []}
-username_exists_error_response = {"error": "username is already in use"}
+empty_response = Response({"total_length": 0, "array": []})
+username_exists_error_response = Response(
+    {"error": "username is already in use"},
+    status.HTTP_409_CONFLICT
+)
 
 
 @api_view(['GET', 'POST'])
 def user_api(request):
     if request.method == 'GET':
         params = request.query_params
-        count = User.objects.count()
-        if count == 0:
-            return Response(empty_response)
+        if (count := User.objects.count()) == 0:
+            return empty_response
 
         index, vector = params.get('index', count), params.get('vector', '-10')
 
@@ -68,19 +70,15 @@ def user_api(request):
         try:
             return Response(create_from_request(User, request.data))
         except IntegrityError:
-            return Response(
-                username_exists_error_response,
-                status.HTTP_409_CONFLICT
-            )
+            return username_exists_error_response
 
 
 @api_view(['GET', 'POST'])
 def message_api(request):
     if request.method == 'GET':
         params = request.query_params
-        count = Message.objects.count()
-        if count == 0:
-            return Response(empty_response)
+        if (count := Message.objects.count()) == 0:
+            return empty_response
 
         index, vector = params.get('index', count), params.get('vector', '-10')
         return Response(
