@@ -22,6 +22,7 @@ def api_subarray(model, vector, index, sort):
     """
     step = {'-': -1}.get(vector[0], 1)
     start, stop = abs(int(vector)), int(index)
+
     return model.objects.order_by(sort)[start:stop][::step]
 
 
@@ -37,6 +38,8 @@ def api_array_response_dict(serializer, instances, count):
 
 
 available_user_sorts = {'username': '-username', 'timestamp': 'timestamp'}
+empty_response = {"total_length": 0, "array": []}
+username_exists_error_response = {"error": "username is already in use"}
 
 
 @api_view(['GET', 'POST'])
@@ -45,7 +48,7 @@ def user_api(request):
         params = request.query_params
         count = User.objects.count()
         if count == 0:
-            return Response({"total_length": 0, "array": []})
+            return Response(empty_response)
 
         index, vector = params.get('index', count), params.get('vector', '-10')
 
@@ -65,7 +68,7 @@ def user_api(request):
             return Response(create_from_request(User, UserSerializer, data))
         except IntegrityError:
             return Response(
-                {"error": "username is already in use"},
+                username_exists_error_response,
                 status.HTTP_409_CONFLICT
             )
 
@@ -76,7 +79,7 @@ def message_api(request):
         params = request.query_params
         count = Message.objects.count()
         if count == 0:
-            return Response({'total_length': 0, 'array': []})
+            return Response(empty_response)
 
         index, vector = params.get('index', count), params.get('vector', '-10')
         return Response(
