@@ -5,7 +5,7 @@ from rest_framework import status
 from django.urls import reverse
 from rest_api.views import (
     message_api, user_api, api_subarray,
-    api_array_response_dict, create_from_request
+    api_array_response, create_from_request
 )
 from rest_api.models import User, Message
 
@@ -39,14 +39,12 @@ class ModelTestCase(TestCase):
         subarray = api_subarray(User, '-1', count, '-username')
         print(subarray, User.objects.order_by('-username'))
 
-        print(api_array_response_dict(User, subarray, count))
+        print(api_array_response(User, subarray, count))
 
 
 class BaseAPITestCase(APITestCase):
 
     def test(self):
-        response = self.client.get(self.url, format='json')
-
         for case in self.cases:
             response = self.client.post(
                 self.url, case, format='json'
@@ -56,9 +54,10 @@ class BaseAPITestCase(APITestCase):
         print('Successful Post Sample:', response.data)
         self.assertEqual(self.model.objects.count(), 15)
 
+        response = self.client.get(self.url, format='json')
         print(
             'Default GET Sample:',
-            self.client.get(self.url, format='json').data
+            response.data
         )
 
         response_data = self.client.get(
@@ -69,21 +68,34 @@ class BaseAPITestCase(APITestCase):
         )
         print('Vectored GET Sample:', response_data['array'])
         self.assertEqual(
-            len(response_data['array']), 5
+            len(response_data['array']), 2
         )
 
         response_data = self.client.get(
             self.url, {"vector": "0", "index": "7"}, format='json'
         ).data
         self.assertEqual(
-            len(response_data['array']), 7
+            len(response_data['array']), 0
         )
 
         response_data = self.client.get(
-            self.url, {"vector": "2"}, format='json'
+            self.url, {"vector": "1"}, format='json'
         ).data
         self.assertEqual(
-            len(response_data['array']), 13
+            len(response_data['array']), 1
+        )
+
+        response = self.client.get(
+            self.url, {"index": "300"}, format='json'
+        )
+        self.assertEqual(
+            response.status_code, status.HTTP_400_BAD_REQUEST
+        )
+
+        print("******\n\n",
+            self.client.get(
+                self.url, {"vector": "-3", "index": "2", "sort": "timestamp"}, format='json'
+            ).data
         )
 
 
@@ -102,9 +114,16 @@ class UserAPITestCase(BaseAPITestCase):
 
     def test(self):
         super().test()
+        response_data = self.client.get(self.url, format='json').data
+        self.assertEqual(
+            [u['username'] for u in response_data['array']],
+            [
+                u.username
+                for u in self.model.objects.order_by('-username')[5:15][::-1]
+            ])
         response_data = self.client.get(
             self.url,
-            {"vector": "-0", "index": "10", "sort": "timestamp"},
+            {"vector": "-8", "index": "10", "sort": "timestamp"},
             format='json'
         ).data
         self.assertEqual(
@@ -119,7 +138,7 @@ class UserAPITestCase(BaseAPITestCase):
             [u['username'] for u in response_data['array']],
             [
                 u.username
-                for u in self.model.objects.order_by('timestamp')[0:10][::-1]
+                for u in self.model.objects.order_by('timestamp')[11-8:10+1][::-1]
             ]
         )
         self.assertEqual(User.objects.first().username, 'test01')

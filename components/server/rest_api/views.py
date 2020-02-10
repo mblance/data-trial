@@ -15,27 +15,30 @@ def create_from_request(model, data):
     return {"id": str(instance.id)}
 
 
-def api_subarray(model, vector, index, sort):
+def api_subarray(model, vector, index: int, sort):
     """
         Return a slice of a sorted model, reversed if
         the vector is negative
     """
-    step = {'-': -1}.get(vector[0], 1)
-    start, stop = abs(int(vector)), int(index)
+    if vector[0] == '-':
+        stop, step = index + 1, -1
+        start = stop + int(vector)
+    else:
+        start, step = index, 1
+        stop = int(vector) + start
 
-    return model.objects.order_by(sort).values()[start:stop][::step]
+    return model.objects.order_by(sort).values()[start:stop][::-1]
 
 
-def api_array_response_dict(instances, count):
+def api_array_response(instances, count):
     """
-        Returns a response dict with the count of the array
+        Returns a response with the count of the array
         with a serialized subarray
     """
-    return {
+    return Response({
         "total_length": count,
         "array": instances
-    }
-
+    })
 
 available_user_sorts = {'username': '-username', 'timestamp': 'timestamp'}
 empty_response = Response({"total_length": 0, "array": []})
@@ -43,6 +46,18 @@ username_exists_error_response = Response(
     {"error": "username is already in use"},
     status.HTTP_409_CONFLICT
 )
+array_index_error_response = Response(
+    {'error': 'array index is out of bounds'}, 
+    status.HTTP_400_BAD_REQUEST
+)
+
+def response_body_get(model, vector, index, sort, count):
+    index = int(index)
+    if index > count:
+        return array_index_error_response
+    return api_array_response(
+            api_subarray(model, vector, index, sort), count
+        )
 
 
 @api_view(['GET', 'POST'])
@@ -52,17 +67,13 @@ def user_api(request):
         if (count := User.objects.count()) == 0:
             return empty_response
 
-        index, vector = params.get('index', count), params.get('vector', '-10')
-
         # Default the sorts to -username if an unavailable sort is specified
         sort = available_user_sorts.get(
             params.get('sort', 'username'), '-username'
         )
-
-        return Response(
-            api_array_response_dict(
-                api_subarray(User, vector, index, sort), count
-            )
+        return response_body_get(
+            User, params.get('vector', '-10'), params.get('index', count - 1),
+            sort, count
         )
     else:
         # For efficiency, attempt to insert into the database to save a query
@@ -80,12 +91,9 @@ def message_api(request):
         if (count := Message.objects.count()) == 0:
             return empty_response
 
-        index, vector = params.get('index', count), params.get('vector', '-10')
-        return Response(
-            api_array_response_dict(
-                api_subarray(Message, vector, index, 'timestamp'),
-                count
-            )
+        return response_body_get(
+            Message, params.get('vector', '-10'), params.get('index', count - 1),
+            'timestamp', count
         )
     else:
         return Response(
