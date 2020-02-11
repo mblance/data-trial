@@ -29,6 +29,7 @@ def api_subarray(model, vector, index: int, sort):
 
     return model.objects.order_by(sort)[start:stop].values()[::step]
 
+
 available_user_sorts = {'username': '-username', 'timestamp': 'timestamp'}
 empty_response = Response({"total_length": 0, "array": []})
 username_exists_error_response = Response(
@@ -39,6 +40,7 @@ array_index_error_response = Response(
     {'error': 'array index is out of bounds'},
     status.HTTP_400_BAD_REQUEST
 )
+
 
 def response_body_get(model, vector: str, index: int, sort: str, count: int):
     """
@@ -51,6 +53,7 @@ def response_body_get(model, vector: str, index: int, sort: str, count: int):
         "total_length": count,
         "array": api_subarray(model, vector, index, sort)
     })
+
 
 @api_view(['GET', 'POST'])
 def user_api(request):
